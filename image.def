@@ -1,0 +1,27 @@
+# The source of our OS is Docker
+Bootstrap: docker
+# Here we use Alpine Linux as it is a lightweight and fast OS
+#  In particular, we use an image containing micromamba, a miniconda replacement
+From: mambaorg/micromamba:alpine
+
+# This is what runs when you invoke the image file in the shell
+# So `./image.sif python a.py` is equivalent to
+#  `/bin/miromamba run -r ~/micromamba/ -p environment python a.py
+%runscript
+    #!/bin/bash
+    # echo the command back for logging
+    echo "Command: $*"
+
+    # Python environment name
+    env="environment"
+    # Path to python environment (probably don't change this line)
+    directory="$HOME/micromamba/envs/$env"
+
+    # Check if the directory exists
+    if [ -d "$directory" ]; then
+        echo "Found python environment $directory"
+    else
+        echo "Did not find python environment $env at path $directory, creating with python 3.10"
+        /bin/micromamba create -r ~/micromamba/ -n "$env" -c conda-forge -y python=3.10
+    fi
+    /bin/micromamba run --root-prefix ~/micromamba/ --prefix "$env" $*
