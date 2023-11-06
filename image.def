@@ -1,31 +1,46 @@
 # The source of our OS is Docker
 Bootstrap: docker
-# Here we use Alpine Linux as it is a lightweight and fast OS
-#  In particular, we use an image containing micromamba, a miniconda replacement
+# Install an image containing micromamba, a miniconda replacement
 From: mambaorg/micromamba
 
+# These are arguments that get passed to the `apptainer build`
+#  command and can then be used in this definition file
 %arguments
     CONDA_ENV_NAME=my_environment
 
+# This is the script that runs once after the OS has been
+#  built for the image. This is where you want to install
+#  any additional tools you might need (e.g. other compilers)
 %post
-    apt-get update && apt-get install -y build-essential gcc
+    apt-get update && apt-get install -y \
+        build-essential gcc
 
 # This is what runs when you invoke the image file in the shell
 # So `./image.sif python a.py` is equivalent to
-#  `/bin/miromamba run -r ~/micromamba/ -p environment python a.py
+#  `/bin/miromamba run -r ~/micromamba/ -p my_environment python a.py
+# This section also will create the conda env if it does not already
+#  exist in the default location in your home directory
 %runscript
     #!/bin/bash
     # echo the command back for logging
     echo "Command: $*"
 
     # Path to python environment (probably don't change this line)
+    # `{{  CONDA_ENV_NAME }}` gets replaced with the value of the
+    #  conda environment, passed in at build time. Default is
+    #  "my_environment" as you can see above
     directory="$HOME/micromamba/envs/{{ CONDA_ENV_NAME }}"
 
     # Check if the directory exists
     if [ -d "$directory" ]; then
         echo "Found python environment $directory"
     else
-        echo "Did not find python environment $env at path $directory, creating with python 3.10"
-        /bin/micromamba create -r ~/micromamba/ -n {{ CONDA_ENV_NAME }} -c conda-forge -y python=3.10
+        echo "Did not find $env at $directory, creating with python 3.10"
+        # create the env with python 3.10 installed and nothing else
+        /bin/micromamba create -r ~/micromamba/ -n {{ CONDA_ENV_NAME }} \
+            -c conda-forge -y python=3.10
     fi
-    /bin/micromamba run --root-prefix ~/micromamba/ --prefix {{ CONDA_ENV_NAME }} $*
+
+    # run the user's command inside the conda environment
+    /bin/micromamba run --root-prefix ~/micromamba/ \
+        --prefix {{ CONDA_ENV_NAME }} $*
