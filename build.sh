@@ -25,8 +25,8 @@ echo "Starting image build on compute node"
 # 'apptainer build' is the actual command we are running on the compute node
 #  this command takes a definition file and creates an image file
 # `--force` overwrites an existing image file
-# promonet.sif is out output image file
-# promonet.def is the input file
+# $image_name.sif is out output image file
+# $image_name.def is the input file
 srun \
  --mem 1G \
  --cpus-per-task 2 \

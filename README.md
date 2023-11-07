@@ -1,4 +1,4 @@
-# Northwestern SLURM Tempalte
+# Northwestern SLURM Template
 
 This is a very barebones template for working on the CS Department's SLURM cluster.
 
